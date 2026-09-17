@@ -1,93 +1,157 @@
 # Distributed Job Processing System
 
-> A fault-tolerant distributed job processing platform for executing background tasks across multiple worker nodes.
+> A fault-tolerant distributed backend for reliable asynchronous job processing across multiple worker nodes.
 
 ## 📌 Overview
 
-A backend system where clients submit jobs through an API, jobs enter a queue, and worker nodes process them asynchronously.
+A production-inspired backend infrastructure system where clients submit jobs through REST APIs. Jobs are persisted, queued, and asynchronously processed by distributed workers with retries, rate limiting, failure recovery, and horizontal scaling.
 
 ```text
-Client → API → Queue → Workers → PostgreSQL
+Client
+  ↓
+API Gateway
+  ↓
+Rate Limiter
+  ↓
+Job Service
+  ↓
+Message Queue
+  ↓
+Worker Pool
+  ↓
+PostgreSQL / Redis
 ```
 
 ## 🏗️ Architecture
 
 ```text
-              ┌─────────┐
-              │ Client  │
-              └────┬────┘
-                   ↓
-              ┌─────────┐
-              │   API   │
-              └────┬────┘
-                   ↓
-              ┌─────────┐
-              │  Queue  │
-              └────┬────┘
-                   ↓
-        ┌──────────┼──────────┐
-        ↓          ↓          ↓
-     Worker 1   Worker 2   Worker 3
-        └──────────┼──────────┘
-                   ↓
-              ┌─────────┐
-              │   DB    │
-              └─────────┘
+                    ┌─────────────┐
+                    │   Client    │
+                    └──────┬──────┘
+                           ↓
+                    ┌─────────────┐
+                    │ API Gateway │
+                    └──────┬──────┘
+                           ↓
+                    ┌─────────────┐
+                    │Rate Limiter │
+                    └──────┬──────┘
+                           ↓
+                    ┌─────────────┐
+                    │ Job Service │
+                    └──────┬──────┘
+                           ↓
+                    ┌─────────────┐
+                    │Message Queue│
+                    └──────┬──────┘
+                           ↓
+             ┌─────────────┼─────────────┐
+             ↓             ↓             ↓
+         Worker 1      Worker 2      Worker 3
+             └─────────────┼─────────────┘
+                           ↓
+                    ┌─────────────┐
+                    │ PostgreSQL  │
+                    └─────────────┘
+
+       Redis → Distributed State / Locks / Rate Limits
 ```
 
-### Failure Recovery
+## ⚙️ Backend Components
+
+* **API Gateway** — Request routing and rate limiting
+* **Job Service** — Validation, job creation and lifecycle management
+* **Message Queue** — Asynchronous job distribution
+* **Worker Pool** — Concurrent job execution
+* **Scheduler** — Delayed and scheduled jobs
+* **Retry Manager** — Retry policies with exponential backoff
+* **Dead Letter Queue** — Isolates permanently failed jobs
+* **Worker Registry** — Tracks worker health and assignments
+* **Heartbeat Monitor** — Detects failed workers
+* **Recovery Engine** — Requeues abandoned jobs
+* **Idempotency Layer** — Prevents duplicate side effects
+* **Distributed Lock Manager** — Coordinates shared resources
+* **Persistence Layer** — Job state, history and results
+* **Metrics Layer** — Throughput, latency, failures and queue depth
+
+## 🔄 Job Lifecycle
 
 ```text
-Worker → Heartbeat → Monitor
-                     ↓
-                  Timeout
-                     ↓
-                  Recovery
-                     ↓
-                  Requeue
-                     ↓
-              Another Worker
+PENDING
+   ↓
+QUEUED
+   ↓
+PROCESSING
+   ↓
+COMPLETED
+
+PROCESSING
+   ↓
+FAILED
+   ↓
+RETRY + BACKOFF
+   ↓
+QUEUED
+
+FAILED
+   ↓
+MAX RETRIES
+   ↓
+DEAD LETTER QUEUE
 ```
 
-## ⚙️ Components
+## 💥 Failure Recovery
 
-* **API Server** — Job submission and status APIs
-* **Job Queue** — Buffers and distributes work
-* **Workers** — Execute jobs concurrently
-* **Worker Monitor** — Tracks worker health
-* **Recovery Engine** — Recovers jobs from failed workers
-* **Retry Manager** — Handles failed jobs with backoff
-* **Scheduler** — Handles delayed and scheduled jobs
-* **PostgreSQL** — Stores job state and results
+```text
+Worker
+   ↓
+Heartbeat
+   ↓
+Failure Detection
+   ↓
+Mark Worker Unavailable
+   ↓
+Recover Job
+   ↓
+Requeue
+   ↓
+Another Worker
+```
 
 ## 🚀 Key Features
 
-* Asynchronous job processing
-* Concurrent workers
-* Retries & exponential backoff
+* RESTful APIs
+* Asynchronous processing
+* Concurrent worker execution
+* Retry & exponential backoff
 * Dead Letter Queue
-* Worker heartbeats & failure detection
-* Job recovery & idempotency
-* Priority & scheduled jobs
-* Backpressure & rate limiting
-* Horizontal scaling
+* Rate limiting
+* Distributed locks
+* Worker heartbeats
+* Failure detection & recovery
+* Idempotent job execution
+* Priority queues
+* Scheduled & delayed jobs
+* Backpressure
+* Horizontal worker scaling
+* Load balancing
 * Performance benchmarking
-* Metrics & observability
+* Metrics, logging & tracing
 
-## 🛠️ Stack
+## 🛠️ Tech Stack
 
-**Go · PostgreSQL · Redis / Message Broker · Docker · Prometheus · Grafana**
+**Java 21 · Spring Boot · PostgreSQL · Redis · RabbitMQ/Kafka · Docker · Prometheus · Grafana**
 
-## 🧠 Concepts
+## 🧠 Core Concepts
 
-**Distributed Systems · Concurrency · Fault Tolerance · Message Queues · Idempotency · Failure Recovery · Backpressure · Horizontal Scaling**
+**Distributed Systems · Concurrency · Message Queues · Rate Limiting · Distributed Locks · Fault Tolerance · Idempotency · Failure Recovery · Backpressure · Horizontal Scaling · Observability**
 
 ## 🗺️ Roadmap
 
-**Core Processing → Reliability → Distributed Workers → Scheduling → Scaling → Observability**
+**Core Processing → Reliability → Distributed Workers → Scheduling → Scaling → Observability → Production Deployment**
 
 ## 📌 Status
 
 🚧 **Planned**
 
-> Goal: Build and understand reliable distributed infrastructure for executing asynchronous workloads under failures and increasing load.
+> Goal: Build reliable distributed backend infrastructure that continues processing work correctly under concurrency, failures, retries, and increasing load.
