@@ -1,5 +1,4 @@
-# Distributed Job Processing System
-
+# Distributed Job Processing Systems
 > A fault-tolerant distributed backend for reliable asynchronous job processing across multiple worker nodes.
 
 ## 📌 Overview
